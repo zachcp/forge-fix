@@ -189,48 +189,159 @@ Steps:
 Verified packages: colorama"
 ```
 
-## Workflow for AI Agents
+## Complete Migration Workflow
 
-### Phase 1: Discovery
+### Prerequisites
+```bash
+# Install GitHub CLI (if not already installed)
+brew install gh
+
+# Authenticate with GitHub
+gh auth login
+
+# Install rattler-build
+pixi global install rattler-build
+```
+
+### Phase 1: Discovery & Setup
 1. Check progress tracker for packages that need migration
 2. Search existing Beads issues: `bd list --labels migration`
-3. Create Beads issue: `bd create "Migrate <package> to recipe v1" --labels migration,<package>`
-4. Identify package dependencies and complexity
-5. Add analysis to issue description or comment
+3. Create Beads issue:
+   ```bash
+   bd create "Migrate <package> to recipe v1" --labels migration,<package>
+   bd update <id> --status in_progress
+   ```
 
-### Phase 2: Analysis
-1. Update Beads: `bd update <id> --status in_progress`
-2. Clone/download the feedstock to `packages/`
-3. Analyze the current `meta.yaml`
-4. Identify patterns and potential issues
-5. Search for similar patterns: `bd list --labels pattern`
-6. Add findings as comments: `bd comment <id> "Package uses CMake, may hit path issue"`
+### Phase 2: Fork & Clone as Submodule
 
-### Phase 3: Conversion
-1. Create recipe-v1 branch in feedstock
-2. Convert `meta.yaml` to `recipe.yaml` following CEP 13/14
-3. Apply known solution patterns from previous issues
-4. Validate YAML syntax
-5. Document conversion: `bd comment <id> "✓ Created recipe.yaml"`
+**Using GitHub CLI (recommended):**
+```bash
+# Fork the feedstock to your GitHub account
+gh repo fork conda-forge/<package>-feedstock --clone=false
 
-### Phase 4: Testing
-1. Attempt build with `rattler-build`
-2. Document results: `bd comment <id> "Build output: ..."`
+# Add as submodule (replace YOUR_USERNAME with your GitHub username)
+cd packages
+git submodule add https://github.com/YOUR_USERNAME/<package>-feedstock.git <package>-feedstock
+cd <package>-feedstock
+
+# Create recipe-v1 branch
+git checkout -b recipe-v1
+```
+
+Document progress:
+```bash
+bd comment <id> "✓ Forked and added as submodule"
+```
+
+### Phase 3: Analysis
+1. Analyze the current `meta.yaml`
+2. Identify patterns and potential issues
+3. Search for similar patterns: `bd list --labels pattern`
+4. Add findings:
+   ```bash
+   bd comment <id> "Package type: Pure Python noarch
+   Build system: hatchling
+   Complexity: LOW"
+   ```
+
+### Phase 4: Conversion
+1. Create `recipe.yaml` following CEP 13/14
+2. Apply known solution patterns from previous issues
+3. Document conversion:
+   ```bash
+   bd comment <id> "✓ Created recipe.yaml with:
+   - schema_version: 1
+   - New context section
+   - \${{ }} template syntax
+   - New tests format"
+   ```
+
+### Phase 5: Testing
+1. Test build with rattler-build:
+   ```bash
+   cd packages/<package>-feedstock
+   rattler-build build --recipe recipe/recipe.yaml
+   ```
+
+2. Document results:
+   ```bash
+   bd comment <id> "✓ Build successful
+   Package: <package>-<version>-<build>.conda
+   ✓ Tests passed"
+   ```
+
 3. If blocked:
-   - Update status: `bd update <id> --status blocked --labels blocked`
    - Search for pattern: `bd list --labels pattern,<issue-type>`
-   - If new pattern, create pattern issue
+   - Create pattern issue if new
    - Link issues: `bd comment <id> "Blocked by forge-fix-xyz"`
-4. If successful:
-   - Document: `bd comment <id> "✓ Build successful"`
-   - Run tests and document results
 
-### Phase 5: Documentation
-1. Push to recipe-v1 branch
-2. Update issue with final status: `bd update <id> --status closed --labels success`
-3. Document lessons learned: `bd comment <id> "Lessons: ..."`
-4. If found new pattern, create solution issue for reuse
-5. Sync: `bd sync`
+### Phase 6: Commit & Push
+```bash
+cd packages/<package>-feedstock
+
+# Commit the recipe
+git add recipe/recipe.yaml
+git commit -m "Add recipe v1 format (recipe.yaml)
+
+- Convert meta.yaml to recipe.yaml following CEP 13/14
+- Use new \${{ }} template syntax
+- Tested successfully with rattler-build"
+
+# Push to your fork
+git push origin recipe-v1
+```
+
+Document:
+```bash
+bd comment <id> "✅ Pushed to fork
+Branch: https://github.com/YOUR_USERNAME/<package>-feedstock/tree/recipe-v1"
+```
+
+### Phase 7: Update Main Repo
+```bash
+# Return to main repo
+cd ../..
+
+# Commit the submodule
+git add packages/<package>-feedstock .gitmodules
+git commit -m "Add <package>-feedstock as submodule
+
+- Forked from conda-forge/<package>-feedstock
+- recipe-v1 branch pushed with converted recipe.yaml"
+
+git push origin main
+```
+
+### Phase 8: Finalize
+```bash
+# Close the issue
+bd update <id> --status closed --set-labels migration,<package>,success
+
+# Document lessons learned
+bd comment <id> "Lessons learned:
+- [Key insight 1]
+- [Key insight 2]
+- [Key insight 3]"
+
+# Sync Beads
+bd sync
+```
+
+### Phase 9: Create Solution Template (if applicable)
+If you found a reusable pattern:
+```bash
+bd create "Solution: <Pattern Name>" \
+  --labels solution,<category>,template
+
+bd comment <new-id> "Template based on successful <package> migration.
+Verified packages: <package>
+Pattern works for: [description]
+
+Steps:
+1. [Step 1]
+2. [Step 2]
+..."
+```
 
 ## Common Migration Patterns
 
@@ -360,44 +471,81 @@ bd comment <id> "Progress:
 
 ## Example Workflow: colorama Migration
 
+Complete example showing the full process:
+
 ```bash
 # 1. Create tracking issue
-bd create "Migrate colorama to recipe v1" \
-  --labels migration,python,noarch
+bd create "Migrate colorama to recipe v1" --labels migration,python,noarch
+bd update forge-fix-962 --status in_progress
 
-# 2. Clone and start work
-# (git operations...)
-bd update forge-fix-6lr --status in_progress
+# 2. Fork and add as submodule using GitHub CLI
+gh repo fork conda-forge/colorama-feedstock --clone=false
+# Output: https://github.com/zachcp/colorama-feedstock
 
-# 3. Document conversion
-bd comment forge-fix-6lr "Created recipe.yaml with:
+cd packages
+git submodule add https://github.com/zachcp/colorama-feedstock.git colorama-feedstock
+cd colorama-feedstock
+git checkout -b recipe-v1
+
+bd comment forge-fix-962 "✓ Forked and added as submodule"
+
+# 3. Analyze and convert
+# (Create recipe.yaml following CEP 13/14)
+
+bd comment forge-fix-962 "✓ Created recipe.yaml with:
 - schema_version: 1
 - New context section
 - \${{ }} template syntax
 - New tests format with python element"
 
-# 4. Test and document
-bd comment forge-fix-6lr "✓ Build successful with rattler-build
+# 4. Test with rattler-build
+rattler-build build --recipe recipe/recipe.yaml
+
+bd comment forge-fix-962 "✓ Build successful with rattler-build
 ✓ Tests passed (imports + pip check)
 Package: colorama-0.4.6-pyh4616a5c_1.conda"
 
-# 5. Complete and document learnings
-bd comment forge-fix-6lr "Lessons learned:
+# 5. Commit and push to fork
+git add recipe/recipe.yaml
+git commit -m "Add recipe v1 format (recipe.yaml)
+
+- Convert meta.yaml to recipe.yaml following CEP 13/14
+- Use new \${{ }} template syntax
+- Tested successfully with rattler-build"
+
+git push origin recipe-v1
+
+bd comment forge-fix-962 "✅ Pushed to fork
+Branch: https://github.com/zachcp/colorama-feedstock/tree/recipe-v1"
+
+# 6. Update main repo with submodule
+cd ../..
+git add packages/colorama-feedstock .gitmodules
+git commit -m "Add colorama-feedstock as submodule"
+git push origin main
+
+# 7. Document lessons and close
+bd comment forge-fix-962 "Lessons learned:
 - Pure Python packages are straightforward to convert
 - No issues with noarch builds in rattler-build
 - About section field renames: home→homepage, doc_url→documentation, dev_url→repository"
 
-bd update forge-fix-6lr --status closed --labels success
+bd update forge-fix-962 --status closed --set-labels migration,python,noarch,success
 
-# 6. Create solution template for others
-bd create "Solution: Pure Python noarch template" \
-  --labels solution,python,template \
-  --description "Template based on successful colorama migration.
+# 8. Create solution template for reuse
+bd create "Solution: Pure Python noarch template" --labels solution,python,template
+
+bd comment forge-fix-quw "Template based on successful colorama migration.
 Verified packages: colorama
 Pattern works for: simple Python packages with hatchling/setuptools"
 
 bd sync
 ```
+
+**Result:** 
+- Fork: https://github.com/zachcp/colorama-feedstock
+- Branch: https://github.com/zachcp/colorama-feedstock/tree/recipe-v1
+- Ready for PR: https://github.com/conda-forge/colorama-feedstock/compare/main...zachcp:colorama-feedstock:recipe-v1
 
 ## Status Definitions
 
