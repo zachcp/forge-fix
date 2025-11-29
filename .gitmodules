@@ -43,3 +43,12 @@
 [submodule "packages/pluggy-feedstock"]
 	path = packages/pluggy-feedstock
 	url = https://github.com/zachcp/pluggy-feedstock.git
+[submodule "packages/jinja2-feedstock"]
+	path = packages/jinja2-feedstock
+	url = https://github.com/zachcp/jinja2-feedstock.git
+[submodule "packages/attrs-feedstock"]
+	path = packages/attrs-feedstock
+	url = https://github.com/zachcp/attrs-feedstock.git
+[submodule "packages/mako-feedstock"]
+	path = packages/mako-feedstock
+	url = https://github.com/zachcp/mako-feedstock.git
