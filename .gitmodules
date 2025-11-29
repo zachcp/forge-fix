@@ -73,3 +73,6 @@
 [submodule "packages/cloudpickle-feedstock"]
 	path = packages/cloudpickle-feedstock
 	url = https://github.com/zachcp/cloudpickle-feedstock.git
+[submodule "packages/toolz-feedstock"]
+	path = packages/toolz-feedstock
+	url = https://github.com/zachcp/toolz-feedstock.git
