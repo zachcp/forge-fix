@@ -79,3 +79,6 @@
 [submodule "packages/toml-feedstock"]
 	path = packages/toml-feedstock
 	url = https://github.com/zachcp/toml-feedstock.git
+[submodule "packages/more-itertools-feedstock"]
+	path = packages/more-itertools-feedstock
+	url = https://github.com/zachcp/more-itertools-feedstock.git
