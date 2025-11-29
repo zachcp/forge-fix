@@ -1167,19 +1167,22 @@ Update `.scripts/build_steps.sh` to detect `recipe.yaml` and use `rattler-build`
    ```
 
 2. **Replace with conditional logic:**
-   ```bash
-   # Use rattler-build if recipe.yaml exists, otherwise fall back to conda-build
-   if [[ -f "${RECIPE_ROOT}/recipe.yaml" ]]; then
-       rattler-build build \
-           --recipe "${RECIPE_ROOT}/recipe.yaml" \
-           --build-dir "${FEEDSTOCK_ROOT}/build_artifacts"
-   else
-       conda-build "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
-           --suppress-variables ${EXTRA_CB_OPTIONS:-} \
-           --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
-           --extra-meta flow_run_id="${flow_run_id:-}" remote_url="${remote_url:-}" sha="${sha:-}"
-   fi
-   ```
+    ```bash
+    # Use rattler-build if recipe.yaml exists, otherwise fall back to conda-build
+    if [[ -f "${RECIPE_ROOT}/recipe.yaml" ]]; then
+        rattler-build build \
+            --recipe "${RECIPE_ROOT}/recipe.yaml" \
+            --output-dir "${FEEDSTOCK_ROOT}/build_artifacts" \
+            --variant python_min=3.9
+    else
+        conda-build "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+            --suppress-variables ${EXTRA_CB_OPTIONS:-} \
+            --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
+            --extra-meta flow_run_id="${flow_run_id:-}" remote_url="${remote_url:-}" sha="${sha:-}"
+    fi
+    ```
+    
+    **Note:** For noarch python packages, always include `--variant python_min=3.9` because conda-forge CI does not automatically inject the `python_min` variable.
 
 3. **Install rattler-build in CI** (around line 36-38):
    ```bash
@@ -1212,6 +1215,35 @@ Update `.scripts/build_steps.sh` to detect `recipe.yaml` and use `rattler-build`
 - When only `recipe.yaml` exists, it uses `rattler-build`
 - This allows the same feedstock to work during migration (tests both formats)
 - The fix should be committed to your fork before the PR is created
+
+### Error: python_min variable not being substituted in noarch recipes
+
+**Symptom:**
+```
+× failed to parse match spec: unable to parse version spec: .*
+  ╭─[recipe/recipe.yaml:23:7]
+   22 │     - flit-core
+   23 │     - python ${{ python_min }}.*
+   ·       ─────────────┬────────────
+   ·                    ╰── error parsing `python .*` as a match spec
+```
+
+**Root Cause:** For noarch python recipes using `${{ python_min }}` variable, conda-forge CI does not automatically inject this variable. The recipe uses it, but rattler-build receives it unsubstituted (empty string).
+
+**Solution:** Pass `python_min` as a variant to rattler-build in `.scripts/build_steps.sh`:
+
+```bash
+rattler-build build \
+    --recipe "${RECIPE_ROOT}/recipe.yaml" \
+    --output-dir "${FEEDSTOCK_ROOT}/build_artifacts" \
+    --variant python_min=3.9
+```
+
+**Important:**
+- Default conda-forge minimum Python is 3.9
+- If package requires newer Python, adjust the variant value accordingly
+- This must be in the rattler-build invocation in `.scripts/build_steps.sh`
+- Do NOT set `python_min` in the recipe context unless overriding the default (conda-forge provides it)
 
 ## Tips for AI Agents
 
