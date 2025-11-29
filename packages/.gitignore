@@ -1,12 +1,10 @@
-# Ignore all feedstock clones (these should be forked/submodules)
-*
+# This directory contains feedstock submodules
+# Each feedstock should be:
+# 1. Forked to your GitHub account
+# 2. Added as a submodule: git submodule add https://github.com/YOUR_USERNAME/package-feedstock packages/package-feedstock
+# 3. Worked on in a recipe-v1 branch
+# 4. Pushed to your fork
+# 5. PR'd to upstream conda-forge
 
-# But track this .gitignore
-!.gitignore
-
-# Instructions for working with feedstocks:
-# 1. Fork the feedstock to your GitHub account
-# 2. Clone as submodule: git submodule add https://github.com/YOUR_USERNAME/package-feedstock packages/package-feedstock
-# 3. Work in the feedstock, create recipe-v1 branch
-# 4. Push to your fork
-# 5. Create PR to upstream conda-forge
+# Don't ignore anything - we want to track submodules
+# (This file exists mainly for documentation purposes)

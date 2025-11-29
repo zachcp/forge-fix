@@ -1,0 +1,3 @@
+[submodule "packages/colorama-feedstock"]
+	path = packages/colorama-feedstock
+	url = https://github.com/zachcp/colorama-feedstock.git
