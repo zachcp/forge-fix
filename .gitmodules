@@ -76,3 +76,6 @@
 [submodule "packages/toolz-feedstock"]
 	path = packages/toolz-feedstock
 	url = https://github.com/zachcp/toolz-feedstock.git
+[submodule "packages/toml-feedstock"]
+	path = packages/toml-feedstock
+	url = https://github.com/zachcp/toml-feedstock.git
