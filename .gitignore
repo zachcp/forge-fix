@@ -1,0 +1,35 @@
+# Build artifacts from rattler-build and conda-build
+output/
+build/
+*.conda
+*.tar.bz2
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+
+# Don't ignore packages/ - we track submodules there!
+# Each feedstock is a git submodule and should be tracked
