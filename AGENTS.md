@@ -178,6 +178,7 @@ cd packages/<package>-feedstock
 # FIRST: Configure conda-forge.yml
 # Ensure conda-forge.yml contains:
 # conda_build_tool: rattler-build
+# conda_install_tool: pixi
 
 # THEN: Re-render to update CI
 conda-smithy rerender --commit auto
@@ -187,7 +188,7 @@ git rm recipe/meta.yaml
 git commit -m "Remove meta.yaml (replaced by recipe.yaml)"
 ```
 
-**Important:** Both formats should NOT coexist in the same feedstock, but you MUST configure `conda-forge.yml` with `conda_build_tool: rattler-build` BEFORE removing `meta.yaml`, otherwise CI will fail with "No valid recipes found".
+**Important:** Both formats should NOT coexist in the same feedstock, but you MUST configure `conda-forge.yml` with `conda_build_tool: rattler-build` and `conda_install_tool: pixi` BEFORE removing `meta.yaml`, otherwise CI will fail with "No valid recipes found".
 
 ### Why Bump Build Number?
 
@@ -225,6 +226,7 @@ Before removing `meta.yaml`, you MUST configure `conda-forge.yml`:
 
 ```yaml
 conda_build_tool: rattler-build
+conda_install_tool: pixi
 ```
 
 Without this, conda-forge CI will use `conda-build` which only recognizes `meta.yaml`, causing build failures.
@@ -413,14 +415,16 @@ bd comment <id> "✓ Forked and added as submodule"
    
    # Add or update to include:
    # conda_build_tool: rattler-build
+   # conda_install_tool: pixi
    ```
    
    Your `conda-forge.yml` should include:
    ```yaml
    conda_build_tool: rattler-build
+   conda_install_tool: pixi
    ```
    
-   This tells conda-forge CI to use `rattler-build` instead of `conda-build`.
+   This tells conda-forge CI to use `rattler-build` instead of `conda-build` and `pixi` for dependency management.
    
 3. **Bump build number** - Since version is unchanged but we're adding new format:
    ```yaml
@@ -436,7 +440,7 @@ bd comment <id> "✓ Forked and added as submodule"
    - \${{ }} template syntax
    - New tests format
    - Build number bumped to X+1
-   - conda-forge.yml configured for rattler-build
+   - conda-forge.yml configured for rattler-build and pixi
    - meta.yaml will be removed after testing"
    ```
 
@@ -730,10 +734,11 @@ bd comment forge-fix-962 "✓ Created recipe.yaml with:
 # Check current conda-forge.yml
 cat conda-forge.yml
 
-# Add the critical line if missing:
+# Add the critical lines if missing:
 # conda_build_tool: rattler-build
+# conda_install_tool: pixi
 
-bd comment forge-fix-962 "✓ Updated conda-forge.yml with conda_build_tool: rattler-build"
+bd comment forge-fix-962 "✓ Updated conda-forge.yml with rattler-build and pixi"
 
 # 5. Test with rattler-build locally
 rattler-build build --recipe recipe/recipe.yaml
@@ -754,7 +759,7 @@ git commit -m "Replace meta.yaml with recipe.yaml (CEP 13/14)
 
 - Convert to recipe.yaml following CEP 13/14
 - Use new \${{ }} template syntax
-- Configure conda-forge.yml for rattler-build
+- Configure conda-forge.yml for rattler-build and pixi
 - Re-render with conda-smithy
 - Bump build number to 2 (version unchanged, adding new format)
 - Remove meta.yaml (complete replacement)
@@ -764,7 +769,7 @@ git push origin recipe-v1
 
 bd comment forge-fix-962 "✅ Pushed to fork
 Branch: https://github.com/zachcp/colorama-feedstock/tree/recipe-v1
-✅ conda-forge.yml configured with rattler-build
+✅ conda-forge.yml configured with rattler-build and pixi
 ✅ Feedstock re-rendered for CI compatibility"
 
 # 7. Update main repo with submodule
