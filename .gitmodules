@@ -7,3 +7,6 @@
 [submodule "packages/addict-feedstock"]
 	path = packages/addict-feedstock
 	url = https://github.com/zachcp/addict-feedstock.git
+[submodule "packages/asdf-feedstock"]
+	path = packages/asdf-feedstock
+	url = https://github.com/zachcp/asdf-feedstock.git
