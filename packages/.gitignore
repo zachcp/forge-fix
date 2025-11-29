@@ -1,0 +1,12 @@
+# Ignore all feedstock clones (these should be forked/submodules)
+*
+
+# But track this .gitignore
+!.gitignore
+
+# Instructions for working with feedstocks:
+# 1. Fork the feedstock to your GitHub account
+# 2. Clone as submodule: git submodule add https://github.com/YOUR_USERNAME/package-feedstock packages/package-feedstock
+# 3. Work in the feedstock, create recipe-v1 branch
+# 4. Push to your fork
+# 5. Create PR to upstream conda-forge
