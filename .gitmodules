@@ -55,3 +55,6 @@
 [submodule "packages/certifi-feedstock"]
 	path = packages/certifi-feedstock
 	url = https://github.com/zachcp/certifi-feedstock.git
+[submodule "packages/pytz-feedstock"]
+	path = packages/pytz-feedstock
+	url = https://github.com/zachcp/pytz-feedstock.git
