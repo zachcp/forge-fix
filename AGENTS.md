@@ -363,13 +363,15 @@ bd comment <id> "✓ Forked and added as submodule"
 
 ### Phase 3: Analysis
 1. Analyze the current `meta.yaml`
-2. Identify patterns and potential issues
-3. Search for similar patterns: `bd list --labels pattern`
-4. Add findings:
+2. **Verify recipe maintainers in CODEOWNERS file** - Do NOT copy invalid maintainers from recipe-maintainers section. Always check `.github/CODEOWNERS` and git history for correct maintainer names.
+3. Identify patterns and potential issues
+4. Search for similar patterns: `bd list --labels pattern`
+5. Add findings:
    ```bash
    bd comment <id> "Package type: Pure Python noarch
    Build system: hatchling
-   Complexity: LOW"
+   Complexity: LOW
+   Maintainers verified in .github/CODEOWNERS"
    ```
 
 ### Phase 4: Conversion

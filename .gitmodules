@@ -19,3 +19,6 @@
 [submodule "packages/click-feedstock"]
 	path = packages/click-feedstock
 	url = https://github.com/zachcp/click-feedstock.git
+[submodule "packages/importlib-metadata-feedstock"]
+	path = packages/importlib-metadata-feedstock
+	url = https://github.com/zachcp/importlib-metadata-feedstock.git
