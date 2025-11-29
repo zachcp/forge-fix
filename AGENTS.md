@@ -73,6 +73,53 @@ forge-fix/
     └── common_patterns.md
 ```
 
+## Build Number Guidelines
+
+When adding `recipe.yaml` to an existing feedstock:
+
+### Rule: Bump the build number if version is unchanged
+
+Since we're adding a new file format but not changing the package contents or version, we MUST bump the build number:
+
+```yaml
+# meta.yaml has:
+build:
+  number: 1
+
+# recipe.yaml should have:
+build:
+  number: 2  # Increment by 1
+```
+
+### Why?
+
+- Adding `recipe.yaml` changes the feedstock but not the upstream source
+- conda-forge requires a build number bump when the version stays the same
+- This creates a new package build: `package-version-build_2.conda`
+- Users can distinguish between old meta.yaml build and new recipe.yaml build
+
+### Checklist (from conda-forge PR template)
+
+When creating PR:
+- ✅ Used a personal fork of the feedstock
+- ✅ **Bumped the build number (if the version is unchanged)**
+- ⬜ Reset the build number to `0` (if the version changed)
+- ⬜ Re-rendered with latest conda-smithy
+- ✅ Ensured the license file is being packaged
+
+### In Your Workflow
+
+Always check `meta.yaml` for current build number before creating `recipe.yaml`:
+
+```bash
+# Check current build number
+grep "number:" recipe/meta.yaml
+
+# In recipe.yaml, increment it
+# meta.yaml: number: 1
+# recipe.yaml: number: 2
+```
+
 ## Beads Integration
 
 This project uses **Beads** - an AI-native, git-integrated issue tracking system that lives directly in the repository.
@@ -133,7 +180,9 @@ bd create "Migrate colorama to recipe v1" \
   --description "Convert colorama feedstock from meta.yaml to recipe.yaml.
 Package type: Pure Python
 Priority: HIGH - Good template for simple packages
-Feedstock: https://github.com/conda-forge/colorama-feedstock"
+Feedstock: https://github.com/conda-forge/colorama-feedstock
+
+Important: Bump build number since version unchanged"
 ```
 
 Then use comments to track progress:
@@ -246,14 +295,20 @@ bd comment <id> "✓ Forked and added as submodule"
 
 ### Phase 4: Conversion
 1. Create `recipe.yaml` following CEP 13/14
-2. Apply known solution patterns from previous issues
-3. Document conversion:
+2. **Bump build number** - Since version is unchanged but we're adding new format:
+   ```yaml
+   build:
+     number: X+1  # Increment from meta.yaml's current build number
+   ```
+3. Apply known solution patterns from previous issues
+4. Document conversion:
    ```bash
    bd comment <id> "✓ Created recipe.yaml with:
    - schema_version: 1
    - New context section
    - \${{ }} template syntax
-   - New tests format"
+   - New tests format
+   - Build number bumped to X+1"
    ```
 
 ### Phase 5: Testing
@@ -285,6 +340,7 @@ git commit -m "Add recipe v1 format (recipe.yaml)
 
 - Convert meta.yaml to recipe.yaml following CEP 13/14
 - Use new \${{ }} template syntax
+- Bump build number to X (version unchanged, adding new format)
 - Tested successfully with rattler-build"
 
 # Push to your fork
@@ -491,19 +547,21 @@ bd comment forge-fix-962 "✓ Forked and added as submodule"
 
 # 3. Analyze and convert
 # (Create recipe.yaml following CEP 13/14)
+# Important: Bump build number from 1 to 2 since version unchanged
 
 bd comment forge-fix-962 "✓ Created recipe.yaml with:
 - schema_version: 1
 - New context section
 - \${{ }} template syntax
-- New tests format with python element"
+- New tests format with python element
+- Build number bumped to 2"
 
 # 4. Test with rattler-build
 rattler-build build --recipe recipe/recipe.yaml
 
 bd comment forge-fix-962 "✓ Build successful with rattler-build
 ✓ Tests passed (imports + pip check)
-Package: colorama-0.4.6-pyh4616a5c_1.conda"
+Package: colorama-0.4.6-pyh4616a5c_2.conda"
 
 # 5. Commit and push to fork
 git add recipe/recipe.yaml
@@ -511,6 +569,7 @@ git commit -m "Add recipe v1 format (recipe.yaml)
 
 - Convert meta.yaml to recipe.yaml following CEP 13/14
 - Use new \${{ }} template syntax
+- Bump build number to 2 (version unchanged, adding new format)
 - Tested successfully with rattler-build"
 
 git push origin recipe-v1
