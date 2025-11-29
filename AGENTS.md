@@ -100,11 +100,13 @@ context:
   python_min: "3.10"  # Only set if package requires Python >3.9
 ```
 
-**Key Points:**
+**Key Points (CRITICAL):**
 - **Do NOT set `python_min` in context unless you need to override the default**
 - **host**: Use `python ${{ python_min }}.*` for exact match during build
 - **run**: Use `python >=${{ python_min }}` for minimum version at runtime
-- **tests**: Use `python_version: ${{ python_min }}.*` for test environment
+- **tests**: Use `python_version: ${{ python_min }}.*` for test environment (REQUIRED for noarch python)
+  - This MUST be included in tests section for conda-smithy linting to pass
+  - conda-forge will inject python_min at build time
 - Override `python_min` ONLY if package needs newer Python than conda-forge default (3.9)
 
 ## Repository Structure
