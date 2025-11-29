@@ -49,6 +49,49 @@ tests:
 
 **Local testing:** `rattler-build build --recipe recipe/recipe.yaml --variant python_min=3.10`
 
+### Python C-Extension Pattern
+
+```yaml
+# For packages with compiled C extensions (NOT noarch)
+build:
+  number: X
+  skip:
+    - if: python_version < "3.7"
+      then: true
+  script: ${{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+
+requirements:
+  build:
+    - if: build_platform != target_platform
+      then:
+        - python
+        - cross-python_${{ target_platform }}
+    - ${{ compiler('c') }}
+    - ${{ stdlib('c') }}  # REQUIRED when using compiler
+  host:
+    - python
+    - pip
+    - <build-backend>  # setuptools, hatchling, flit-core, or poetry-core
+  run:
+    - python
+
+tests:
+  - python:
+      imports:
+        - package
+      pip_check: true
+```
+
+**Key differences from noarch:**
+- MUST include `${{ compiler('c') }}` and `${{ stdlib('c') }}` in build section
+- Do NOT mark as `noarch: python` - compiled per platform
+- No `python_version` constraint in tests section
+- Skip uses `python_version` not `py` variable
+
+**Local testing:** `rattler-build build --recipe recipe/recipe.yaml --variant python=3.11 --variant c_stdlib=macosx_deployment_target --variant c_stdlib_version=11.0`
+
+**Example:** wrapt-feedstock
+
 ### Essential Commands
 
 ```bash
@@ -57,6 +100,9 @@ conda-smithy lint recipe
 
 # Build locally (noarch python)
 rattler-build build --recipe recipe/recipe.yaml --variant python_min=3.10
+
+# Build locally (C-extension)
+rattler-build build --recipe recipe/recipe.yaml --variant python=3.11
 
 # Re-render feedstock
 conda-smithy rerender --commit auto
@@ -70,7 +116,9 @@ conda-smithy rerender --commit auto
 
 **Phase 1 (Current):** Pure Python noarch packages - simpler conversions, local builds, basic tests
 
-**Phase 2 (Deferred):** C++ extensions & complex builds - cross-platform testing, Docker-based builds, complex variants
+**Phase 2 (In Progress):** C/C++ extensions & complex builds - cross-platform testing, Docker-based builds, complex variants
+- **Status:** First C-extension package (wrapt) successfully migrated and tested
+- **Next:** More C-extension packages, then full C++ libraries
 
 ### Resources
 
@@ -190,11 +238,20 @@ conda-smithy lint recipe
 rattler-build build --recipe recipe/recipe.yaml --variant python_min=3.10
 ```
 
-**Linting Checklist:**
+**Linting Checklist (noarch):**
 - [ ] Key ordering correct
 - [ ] Field names updated (homepage, documentation, repository)
 - [ ] Build backend specified in host
 - [ ] `python_version: ${{ python_min }}.*` in tests section
+- [ ] Using pypi.org (not pypi.io)
+
+**Linting Checklist (C-extension):**
+- [ ] Key ordering correct
+- [ ] Field names updated (homepage, documentation, repository)
+- [ ] Build backend specified in host
+- [ ] `${{ compiler('c') }}` and `${{ stdlib('c') }}` in build requirements
+- [ ] Cross-compilation support with if/then/else
+- [ ] NO `python_version` in tests section
 - [ ] Using pypi.org (not pypi.io)
 
 ### Step 5: Finalize & Submit
@@ -316,6 +373,32 @@ git rm recipe/meta.yaml
 conda-smithy rerender --commit auto
 ```
 
+### "undefined" package in build requirements (C-extension)
+
+**Symptom:** `Cannot solve the request because of: No candidates were found for undefined *.`
+
+**Cause:** `${{ stdlib('c') }}` not evaluating correctly - rattler-build support is still maturing.
+
+**Fix (local testing):** Temporarily comment out `${{ stdlib('c') }}` OR provide variant:
+```bash
+rattler-build build --recipe recipe/recipe.yaml \
+  --variant python=3.11 \
+  --variant c_stdlib=macosx_deployment_target \
+  --variant c_stdlib_version=11.0
+```
+
+**Fix (CI):** Keep `${{ stdlib('c') }}` - conda-forge CI provides proper variants.
+
+### Skip condition not working locally (C-extension)
+
+**Symptom:** Build skipped when using `if: python_version < "3.7"`
+
+**Cause:** `python_version` not set in local variant (only `python` is set).
+
+**Fix (local):** Comment out skip condition for testing, or add to CI-generated variant files.
+
+**Fix (CI):** Condition works properly - conda-forge provides `python_version`.
+
 ---
 
 ## Example: Simple Python Package (colorama)
@@ -362,6 +445,65 @@ gh pr create --repo conda-forge/colorama-feedstock --base main --head zachcp:rec
 
 ---
 
+## Example: C-Extension Package (wrapt)
+
+```bash
+# 1. Setup
+gh repo fork conda-forge/wrapt-feedstock --clone=false
+cd packages && git submodule add https://github.com/zachcp/wrapt-feedstock.git
+cd wrapt-feedstock && git checkout -b recipe-v1
+
+# 2. Check build number and compiler requirements
+grep "number:" recipe/meta.yaml  # Shows: 1
+grep "compiler('c')" recipe/meta.yaml  # Confirms C extension
+
+# 3. Create recipe.yaml with C compiler support
+# - Use ${{ }} syntax
+# - build.number: 2 (bumped from 1)
+# - Add ${{ compiler('c') }} and ${{ stdlib('c') }} to build requirements
+# - Add cross-compilation support with if/then/else
+# - Convert skip selector: python_version < "3.7" with then: true
+# - python in host, python in run (NO version constraints)
+# - NO python_version in tests section
+
+# 4. Configure
+echo "conda_build_tool: rattler-build" >> conda-forge.yml
+echo "conda_install_tool: pixi" >> conda-forge.yml
+
+# 5. Lint & build
+conda-smithy lint recipe
+# For local testing, temporarily comment out skip or provide variants:
+rattler-build build --recipe recipe/recipe.yaml --variant python=3.11
+
+# 6. Finalize
+git rm recipe/meta.yaml
+conda-smithy rerender --commit auto
+git add . && git commit -m "Replace meta.yaml with recipe.yaml (CEP 13/14)
+
+- Convert to recipe.yaml with \${{ }} syntax
+- Add C compiler and stdlib requirements
+- Configure for rattler-build
+- Bump build number to 2
+- Maintain cross-compilation support"
+
+git push origin recipe-v1
+
+# 7. PR (when ready)
+gh pr create --repo conda-forge/wrapt-feedstock --base main --head zachcp:recipe-v1 \
+  --title "Migrate to recipe.yaml (CEP 13/14)" \
+  --body "Converts to recipe.yaml (CEP 13/14) with C extension support. Tested with rattler-build."
+```
+
+**Key learnings:**
+- C extensions require `${{ compiler('c') }}` and `${{ stdlib('c') }}`
+- NOT noarch - builds per platform and Python version
+- Cross-compilation uses if/then/else for build_platform != target_platform
+- Skip conditions use `python_version` not `py`
+- Local testing may require commenting skip or providing full variants
+- Successfully built 89KB artifact with all tests passing
+
+---
+
 ## Complex Example Notes: certifi
 
 For packages with multiple sources:
@@ -384,4 +526,4 @@ For packages with multiple sources:
 
 - **conda-smithy:** 3.53.3+ (full rattler-build support)
 - **rattler-build:** 0.53.0+
-- **Last Updated:** 2025-11-29
+- **Last Updated:** 2025-01-29 (added C-extension pattern)
