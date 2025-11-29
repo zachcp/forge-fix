@@ -14,6 +14,22 @@ Help conda-forge migrate from the classic recipe format (CEP 13/14 Version 0) to
 4. Contributing fixes back to upstream feedstocks
 5. Monitoring progress across the ecosystem
 
+### Phased Approach
+
+**Phase 1 (Current): Pure Python Packages**
+- Focus on noarch python packages (simpler conversions)
+- Build locally with `rattler-build`
+- Test with basic imports + pip check
+- Create PRs for upstream submission
+- Examples: pydantic, sqlalchemy, pytest, black, flake8
+
+**Phase 2 (Deferred): C++ Extensions & Complex Builds**
+- Packages with C/C++ extensions: numpy, pandas, scipy, matplotlib, cryptography, pillow
+- Requires cross-platform testing: Linux, Windows, macOS, multiple architectures
+- Plan: Docker-based build testing before PR submission
+- Complex variant handling: BLAS/LAPACK, backend options, optional dependencies
+- Status: Issues created but held until Phase 2 infrastructure ready
+
 ## Key Resources
 
 ### Documentation
