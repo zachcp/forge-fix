@@ -1056,6 +1056,19 @@ source:
    schema_version: 1
    ```
 
+## Known Issues & Limitations
+
+### conda-smithy re-render and rattler-build
+
+Currently, conda-smithy's re-render command doesn't fully support rattler-build CI script generation for all platforms. This means:
+
+- Configure `conda_build_tool: rattler-build` in conda-forge.yml
+- BUT: Do NOT run `conda-smithy rerender` yet (it removes the conda-build scripts without proper rattler-build replacements)
+- CI will still show warnings but the feedstock maintainers can manually configure rattler-build after the PR is merged
+- Alternative: Manually update `.azure-pipelines/`, `.circleci/`, `.github/workflows/` to use rattler-build instead of conda-build
+
+This is a temporary limitation while conda-smithy adds full rattler-build support.
+
 ## Troubleshooting Common Issues
 
 ### Error: "No valid recipes found" in CI
