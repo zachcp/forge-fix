@@ -719,12 +719,43 @@ Verified packages: colorama
 Pattern works for: simple Python packages with hatchling/setuptools"
 
 bd sync
+
+# 10. Create PR to upstream
+cd packages/colorama-feedstock
+
+gh pr create \
+  --repo conda-forge/colorama-feedstock \
+  --base main \
+  --head zachcp:recipe-v1 \
+  --title "Migrate to recipe.yaml (CEP 13/14)" \
+  --body "This PR migrates the feedstock from meta.yaml to recipe.yaml following CEP 13 and CEP 14.
+
+## Changes
+- Convert to recipe.yaml format with new \${{ }} template syntax
+- Configure conda-forge.yml for rattler-build
+- Bump build number from 1 to 2 (version unchanged, new format)
+- Remove meta.yaml (complete replacement)
+- Re-render with conda-smithy for CI compatibility
+
+## Testing
+- ✅ Built successfully with rattler-build locally
+- ✅ All tests passed (imports + pip check)
+
+## Checklist
+- [x] Used a personal fork of the feedstock
+- [x] Bumped the build number (version unchanged)
+- [x] Re-rendered with latest conda-smithy
+- [x] Ensured the license file is being packaged
+- [x] Removed meta.yaml (recipe.yaml is complete replacement)
+- [x] Tested successfully with rattler-build"
+
+bd comment forge-fix-962 "PR created: https://github.com/conda-forge/colorama-feedstock/pull/XX"
 ```
 
 **Result:** 
 - Fork: https://github.com/zachcp/colorama-feedstock
 - Branch: https://github.com/zachcp/colorama-feedstock/tree/recipe-v1
-- Ready for PR: https://github.com/conda-forge/colorama-feedstock/compare/main...zachcp:colorama-feedstock:recipe-v1
+- PR: Created via `gh pr create` command
 
 ## Status Definitions
 
@@ -744,13 +775,45 @@ Once a package successfully builds and tests:
 
 1. Ensure feedstock is forked to your GitHub
 2. Push recipe-v1 branch
-3. Create PR to upstream feedstock
+3. Create PR to upstream feedstock using GitHub CLI:
+   ```bash
+   cd packages/<package>-feedstock
+   
+   gh pr create \
+     --repo conda-forge/<package>-feedstock \
+     --base main \
+     --head zachcp:recipe-v1 \
+     --title "Migrate to recipe.yaml (CEP 13/14)" \
+     --body "This PR migrates the feedstock from meta.yaml to recipe.yaml following CEP 13 and CEP 14.
+
+   ## Changes
+   - Convert to recipe.yaml format with new \${{ }} template syntax
+   - Configure conda-forge.yml for rattler-build
+   - Bump build number (version unchanged, new format)
+   - Remove meta.yaml (complete replacement)
+   - Re-render with conda-smithy for CI compatibility
+
+   ## Testing
+   - ✅ Built successfully with rattler-build locally
+   - ✅ All tests passed (imports + pip check)
+
+   ## Checklist
+   - [x] Used a personal fork of the feedstock
+   - [x] Bumped the build number (version unchanged)
+   - [x] Re-rendered with latest conda-smithy
+   - [x] Ensured the license file is being packaged
+   - [x] Removed meta.yaml (recipe.yaml is complete replacement)
+   - [x] Tested successfully with rattler-build"
+   ```
+
 4. Update Beads issue with PR link:
    ```bash
    bd comment <id> "PR submitted: https://github.com/conda-forge/xxx-feedstock/pull/123"
    bd update <id> --labels upstream-pr
    ```
 5. Track PR status in comments
+
+**Note:** The `gh pr create` command automatically detects fork relationships and creates the PR against the upstream repository.
 
 ## Linting and Quality Checks
 
