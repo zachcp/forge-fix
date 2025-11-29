@@ -2,6 +2,10 @@
 
 > **Mission:** Migrate conda-forge from meta.yaml to recipe.yaml (CEP 13/14 v1) using rattler-build.
 
+## ⚠️ Known Blocker
+
+**C-extension packages:** Rattler-build CI support in conda-smithy is incomplete. When `conda_build_tool: rattler-build` is set, rerender deletes .ci_support files but doesn't generate replacement CI workflows. **Focus on noarch Python packages only** until tooling matures. See issue: forge-fix-l3s
+
 ## Quick Reference
 
 ### Syntax Changes
@@ -146,7 +150,15 @@ gh pr create --draft \
 ## Examples
 
 **colorama** (noarch): Pure Python, straightforward conversion  
-**wrapt** (C-ext): First compiled package, 89KB artifact, all tests pass
+**wrapt** (C-ext): ⚠️ Blocked - Recipe works locally but CI infrastructure incomplete
+
+## Next Targets
+
+Simple noarch packages to practice:
+- **semantic-version** (forge-fix-syr): Semantic versioning utilities
+- **cloudpickle** (forge-fix-vj3): Extended pickle for distributed computing
+- **toolz** (forge-fix-bf7): Functional utilities
+- **python-dateutil** (forge-fix-eca): Date/time parsing
 
 ---
 
