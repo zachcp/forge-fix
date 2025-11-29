@@ -60,6 +60,36 @@ context:
   version: 1.2.3
 ```
 
+#### Python Version Pinning (noarch: python)
+For `noarch: python` recipes, conda-forge recommends using a `python_min` context variable:
+
+```yaml
+context:
+  name: package
+  version: 1.2.3
+  python_min: "3.9"  # Minimum supported Python version
+
+requirements:
+  host:
+    - python ${{ python_min }}.*
+    - pip
+  run:
+    - python >=${{ python_min }}
+
+tests:
+  - python:
+      imports:
+        - package
+      pip_check: true
+      python_version: ${{ python_min }}.*
+```
+
+**Key Points:**
+- **host**: Use `python ${{ python_min }}.*` for exact match during build
+- **run**: Use `python >=${{ python_min }}` for minimum version at runtime
+- **tests**: Use `python_version: ${{ python_min }}.*` for test environment
+- Override `python_min` if package needs newer Python than conda-forge default
+
 ## Repository Structure
 
 ```
@@ -91,17 +121,26 @@ build:
   number: 2  # Increment by 1
 ```
 
-### Rule 2: Remove meta.yaml after recipe.yaml is complete
+### Rule 2: Remove meta.yaml after conda-forge.yml is configured
 
-`recipe.yaml` is a **complete replacement** for `meta.yaml`, not a supplement. Once recipe.yaml is working:
+`recipe.yaml` is a **complete replacement** for `meta.yaml`, not a supplement. Once recipe.yaml is working AND conda-forge.yml is configured for rattler-build:
 
 ```bash
 cd packages/<package>-feedstock
+
+# FIRST: Configure conda-forge.yml
+# Ensure conda-forge.yml contains:
+# conda_build_tool: rattler-build
+
+# THEN: Re-render to update CI
+conda-smithy rerender --commit auto
+
+# FINALLY: Remove meta.yaml
 git rm recipe/meta.yaml
 git commit -m "Remove meta.yaml (replaced by recipe.yaml)"
 ```
 
-Both formats should NOT coexist in the same feedstock.
+**Important:** Both formats should NOT coexist in the same feedstock, but you MUST configure `conda-forge.yml` with `conda_build_tool: rattler-build` BEFORE removing `meta.yaml`, otherwise CI will fail with "No valid recipes found".
 
 ### Why Bump Build Number?
 
@@ -132,6 +171,16 @@ grep "number:" recipe/meta.yaml
 # meta.yaml: number: 1
 # recipe.yaml: number: 2
 ```
+
+### Critical Configuration Requirement
+
+Before removing `meta.yaml`, you MUST configure `conda-forge.yml`:
+
+```yaml
+conda_build_tool: rattler-build
+```
+
+Without this, conda-forge CI will use `conda-build` which only recognizes `meta.yaml`, causing build failures.
 
 ## Beads Integration
 
@@ -308,13 +357,29 @@ bd comment <id> "✓ Forked and added as submodule"
 
 ### Phase 4: Conversion
 1. Create `recipe.yaml` following CEP 13/14
-2. **Bump build number** - Since version is unchanged but we're adding new format:
+2. **Configure conda-forge.yml for rattler-build**:
+   ```bash
+   # Check if conda-forge.yml exists
+   cat conda-forge.yml
+   
+   # Add or update to include:
+   # conda_build_tool: rattler-build
+   ```
+   
+   Your `conda-forge.yml` should include:
+   ```yaml
+   conda_build_tool: rattler-build
+   ```
+   
+   This tells conda-forge CI to use `rattler-build` instead of `conda-build`.
+   
+3. **Bump build number** - Since version is unchanged but we're adding new format:
    ```yaml
    build:
      number: X+1  # Increment from meta.yaml's current build number
    ```
-3. Apply known solution patterns from previous issues
-4. Document conversion:
+4. Apply known solution patterns from previous issues
+5. Document conversion:
    ```bash
    bd comment <id> "✓ Created recipe.yaml with:
    - schema_version: 1
@@ -322,6 +387,7 @@ bd comment <id> "✓ Forked and added as submodule"
    - \${{ }} template syntax
    - New tests format
    - Build number bumped to X+1
+   - conda-forge.yml configured for rattler-build
    - meta.yaml will be removed after testing"
    ```
 
@@ -344,9 +410,9 @@ bd comment <id> "✓ Forked and added as submodule"
    - Create pattern issue if new
    - Link issues: `bd comment <id> "Blocked by forge-fix-xyz"`
 
-### Phase 6: Remove meta.yaml & Commit
+### Phase 6: Re-render and Commit
 
-Once recipe.yaml is tested and working, remove the old format:
+Once recipe.yaml is tested and working, re-render the feedstock and finalize:
 
 ```bash
 cd packages/<package>-feedstock
@@ -354,12 +420,21 @@ cd packages/<package>-feedstock
 # Remove meta.yaml (recipe.yaml is complete replacement)
 git rm recipe/meta.yaml
 
-# Commit both changes
-git add recipe/recipe.yaml
+# Re-render with conda-smithy to update CI configuration
+# This reads conda-forge.yml and regenerates all CI scripts for rattler-build
+conda-smithy rerender --commit auto
+
+# Or if using pixi:
+pixi run conda-smithy rerender --commit auto
+
+# Commit any remaining changes
+git add recipe/recipe.yaml conda-forge.yml
 git commit -m "Replace meta.yaml with recipe.yaml (CEP 13/14)
 
 - Convert to recipe.yaml following CEP 13/14
 - Use new \${{ }} template syntax
+- Configure conda-forge.yml for rattler-build
+- Re-render with conda-smithy
 - Bump build number to X (version unchanged, adding new format)
 - Remove meta.yaml (complete replacement)
 - Tested successfully with rattler-build"
@@ -372,7 +447,8 @@ Document:
 ```bash
 bd comment <id> "✅ Pushed to fork
 Branch: https://github.com/YOUR_USERNAME/<package>-feedstock/tree/recipe-v1
-Note: meta.yaml removed (recipe.yaml is complete replacement)"
+Note: meta.yaml removed (recipe.yaml is complete replacement)
+Note: conda-forge.yml configured with rattler-build, feedstock re-rendered"
 ```
 
 ### Phase 7: Update Main Repo
@@ -578,20 +654,36 @@ bd comment forge-fix-962 "✓ Created recipe.yaml with:
 - New tests format with python element
 - Build number bumped to 2"
 
-# 4. Test with rattler-build
+# 4. Configure conda-forge.yml for rattler-build
+# Check current conda-forge.yml
+cat conda-forge.yml
+
+# Add the critical line if missing:
+# conda_build_tool: rattler-build
+
+bd comment forge-fix-962 "✓ Updated conda-forge.yml with conda_build_tool: rattler-build"
+
+# 5. Test with rattler-build locally
 rattler-build build --recipe recipe/recipe.yaml
 
 bd comment forge-fix-962 "✓ Build successful with rattler-build
 ✓ Tests passed (imports + pip check)
 Package: colorama-0.4.6-pyh4616a5c_2.conda"
 
-# 5. Remove meta.yaml and commit both changes
+# 6. Remove meta.yaml and re-render
 git rm recipe/meta.yaml
-git add recipe/recipe.yaml
+
+# Re-render to update CI configuration for rattler-build
+conda-smithy rerender --commit auto
+
+# Commit all changes
+git add recipe/recipe.yaml conda-forge.yml
 git commit -m "Replace meta.yaml with recipe.yaml (CEP 13/14)
 
 - Convert to recipe.yaml following CEP 13/14
 - Use new \${{ }} template syntax
+- Configure conda-forge.yml for rattler-build
+- Re-render with conda-smithy
 - Bump build number to 2 (version unchanged, adding new format)
 - Remove meta.yaml (complete replacement)
 - Tested successfully with rattler-build"
@@ -599,23 +691,27 @@ git commit -m "Replace meta.yaml with recipe.yaml (CEP 13/14)
 git push origin recipe-v1
 
 bd comment forge-fix-962 "✅ Pushed to fork
-Branch: https://github.com/zachcp/colorama-feedstock/tree/recipe-v1"
+Branch: https://github.com/zachcp/colorama-feedstock/tree/recipe-v1
+✅ conda-forge.yml configured with rattler-build
+✅ Feedstock re-rendered for CI compatibility"
 
-# 6. Update main repo with submodule
+# 7. Update main repo with submodule
 cd ../..
 git add packages/colorama-feedstock .gitmodules
 git commit -m "Add colorama-feedstock as submodule"
 git push origin main
 
-# 7. Document lessons and close
+# 8. Document lessons and close
 bd comment forge-fix-962 "Lessons learned:
 - Pure Python packages are straightforward to convert
 - No issues with noarch builds in rattler-build
-- About section field renames: home→homepage, doc_url→documentation, dev_url→repository"
+- About section field renames: home→homepage, doc_url→documentation, dev_url→repository
+- CRITICAL: Must add conda_build_tool: rattler-build to conda-forge.yml
+- Must re-render with conda-smithy after adding conda-forge.yml config"
 
 bd update forge-fix-962 --status closed --set-labels migration,python,noarch,success
 
-# 8. Create solution template for reuse
+# 9. Create solution template for reuse
 bd create "Solution: Pure Python noarch template" --labels solution,python,template
 
 bd comment forge-fix-quw "Template based on successful colorama migration.
@@ -655,6 +751,138 @@ Once a package successfully builds and tests:
    bd update <id> --labels upstream-pr
    ```
 5. Track PR status in comments
+
+## Linting and Quality Checks
+
+### conda-smithy lint
+
+Run linting on your recipe to check for common issues:
+
+```bash
+cd packages/<package>-feedstock
+conda-smithy lint recipe
+```
+
+**Note:** `conda-smithy lint` supports both `meta.yaml` and `recipe.yaml` formats.
+
+### Common Lint Warnings
+
+#### Python Version Pinning (noarch: python)
+
+**Warning:**
+```
+noarch: python recipes should usually follow the syntax in our documentation 
+for specifying the Python version.
+```
+
+**Solution:** Use the `python_min` pattern in your `recipe.yaml`:
+
+```yaml
+context:
+  name: package
+  version: 1.0.0
+  python_min: "3.9"  # Set minimum Python version
+
+requirements:
+  host:
+    - python ${{ python_min }}.*  # Exact match for build
+    - pip
+  run:
+    - python >=${{ python_min }}  # Minimum version for runtime
+
+tests:
+  - python:
+      python_version: ${{ python_min }}.*  # Test with minimum version
+      imports:
+        - package
+```
+
+**Why this matters:**
+- Ensures package is tested with minimum supported Python version
+- Makes Python version requirements explicit and consistent
+- Allows easy updates when dropping old Python versions
+
+### rattler-build Commands
+
+**Note:** `rattler-build` does **not** currently have a dedicated `lint` command. However, you can:
+
+1. **Validate syntax** by running a build:
+   ```bash
+   rattler-build build --recipe recipe/recipe.yaml
+   ```
+
+2. **Use conda-smithy lint** (supports recipe.yaml):
+   ```bash
+   conda-smithy lint recipe
+   ```
+
+3. **Check schema** using YAML language server in your editor:
+   ```yaml
+   # yaml-language-server: $schema=https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json
+   schema_version: 1
+   ```
+
+## Troubleshooting Common Issues
+
+### Error: "No valid recipes found" in CI
+
+**Symptom:**
+```
+ValueError: No valid recipes found for input: ['/home/conda/recipe_root']
+```
+
+**Cause:** Conda-forge CI is using `conda-build` (which only recognizes `meta.yaml`) but you only have `recipe.yaml`.
+
+**Solution:**
+1. Add `conda_build_tool: rattler-build` to `conda-forge.yml`:
+   ```yaml
+   conda_build_tool: rattler-build
+   ```
+
+2. Re-render the feedstock:
+   ```bash
+   conda-smithy rerender --commit auto
+   ```
+
+3. Commit and push:
+   ```bash
+   git add .
+   git commit -m "Configure CI for rattler-build"
+   git push origin recipe-v1
+   ```
+
+**Key Points:**
+- Conda-forge defaults to `conda-build` unless explicitly configured
+- `conda-forge.yml` must specify `conda_build_tool: rattler-build`
+- Re-rendering regenerates all CI scripts to use rattler-build
+- You can have ONLY `recipe.yaml` after this configuration
+- See example: [python-librt-feedstock](https://github.com/conda-forge/python-librt-feedstock)
+
+### Error: Both meta.yaml and recipe.yaml exist
+
+**Symptom:** Feedstock has both `recipe/meta.yaml` and `recipe/recipe.yaml`.
+
+**Cause:** During migration, both files were kept.
+
+**Solution:** After configuring `conda-forge.yml` for rattler-build, remove `meta.yaml`:
+```bash
+git rm recipe/meta.yaml
+git commit -m "Remove meta.yaml (replaced by recipe.yaml)"
+```
+
+**Note:** `recipe.yaml` is a complete replacement, not a supplement.
+
+### Error: Build number not bumped
+
+**Symptom:** CI rejects the PR because version unchanged but build number not incremented.
+
+**Cause:** Adding `recipe.yaml` changes the feedstock but not package version.
+
+**Solution:** In `recipe.yaml`, increment build number:
+```yaml
+build:
+  number: X+1  # Where X is the current build number in meta.yaml
+```
 
 ## Tips for AI Agents
 

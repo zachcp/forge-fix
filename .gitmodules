@@ -1,3 +1,6 @@
 [submodule "packages/colorama-feedstock"]
 	path = packages/colorama-feedstock
 	url = https://github.com/zachcp/colorama-feedstock.git
+[submodule "packages/dash-bio-feedstock"]
+	path = packages/dash-bio-feedstock
+	url = https://github.com/zachcp/dash-bio-feedstock.git
