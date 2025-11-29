@@ -125,6 +125,18 @@ context:
   - conda-forge will inject python_min at build time
 - Override `python_min` ONLY if package needs newer Python than conda-forge default (3.9)
 
+**Local Testing Note:**
+For local testing with `rattler-build`, you must provide `python_min` in context since conda-forge CI is not injecting it:
+```bash
+# For local testing, add to context:
+context:
+  name: package
+  version: 1.0.0
+  python_min: "3.9"  # Add this for local testing only
+
+# Remove this before submitting PR - conda-forge provides it
+```
+
 ## Repository Structure
 
 ```
