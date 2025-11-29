@@ -77,14 +77,10 @@ context:
 ```
 
 #### Python Version Pinning (noarch: python)
-For `noarch: python` recipes, conda-forge recommends using a `python_min` context variable:
+For `noarch: python` recipes, conda-forge uses a default `python_min` context variable. **Do NOT explicitly set it in your context section** - it will be provided by conda-forge defaults unless you need to override it.
 
 ```yaml
-context:
-  name: package
-  version: 1.2.3
-  python_min: "3.9"  # Minimum supported Python version
-
+# For packages using conda-forge default python_min:
 requirements:
   host:
     - python ${{ python_min }}.*
@@ -98,13 +94,18 @@ tests:
         - package
       pip_check: true
       python_version: ${{ python_min }}.*
+
+# ONLY if you need to override the default:
+context:
+  python_min: "3.10"  # Only set if package requires Python >3.9
 ```
 
 **Key Points:**
+- **Do NOT set `python_min` in context unless you need to override the default**
 - **host**: Use `python ${{ python_min }}.*` for exact match during build
 - **run**: Use `python >=${{ python_min }}` for minimum version at runtime
 - **tests**: Use `python_version: ${{ python_min }}.*` for test environment
-- Override `python_min` if package needs newer Python than conda-forge default
+- Override `python_min` ONLY if package needs newer Python than conda-forge default (3.9)
 
 ## Repository Structure
 
@@ -415,7 +416,11 @@ bd comment <id> "✓ Forked and added as submodule"
 2. **Field names** - Use `recipe-maintainers` (hyphens), not `recipe_maintainers` (underscores)
 3. **About fields** - Use `homepage`, `documentation`, `repository` (not `home`, `doc_url`, `dev_url`)
 4. **Build backend** - Python pip recipes MUST have setuptools, hatchling, flit-core, or poetry-core in host section
-5. **Python pinning** - For `noarch: python`, use `python_min` context variable with proper syntax
+5. **Python pinning** - For `noarch: python`:
+   - **DO NOT** explicitly set `python_min` in context (use conda-forge default)
+   - Only override if package needs Python >3.9
+   - Use `python ${{ python_min }}.*` in host, `python >=${{ python_min }}` in run
+   - Use `python_version: ${{ python_min }}.*` in tests
 
 ### Phase 5: Testing and Linting
 
