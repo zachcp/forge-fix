@@ -126,15 +126,13 @@ context:
 - Override `python_min` ONLY if package needs newer Python than conda-forge default (3.9)
 
 **Local Testing Note:**
-For local testing with `rattler-build`, you must provide `python_min` in context since conda-forge CI is not injecting it:
+For local testing with `rattler-build`, you must provide `python_min` as a variant since conda-forge CI is not injecting it:
 ```bash
-# For local testing, add to context:
-context:
-  name: package
-  version: 1.0.0
-  python_min: "3.9"  # Add this for local testing only
+# For local testing, use the --variant flag:
+rattler-build build --recipe recipe/recipe.yaml --variant python_min=3.10
 
-# Remove this before submitting PR - conda-forge provides it
+# Do NOT add python_min to context - conda-forge provides it
+# The variant flag is only for local testing
 ```
 
 ## Repository Structure
@@ -468,15 +466,19 @@ bd comment <id> "✓ Forked and added as submodule"
    
    Fix any issues before building (see "Common Lint Warnings" section below).
 
-2. **Test build with rattler-build**:
+2. **Test build with rattler-build** (use variant for python_min):
    ```bash
+   # For noarch python packages, provide python_min as variant
+   rattler-build build --recipe recipe/recipe.yaml --variant python_min=3.10
+   
+   # For non-python packages:
    rattler-build build --recipe recipe/recipe.yaml
    ```
 
 3. **Document results**:
    ```bash
    bd comment <id> "✓ Linting passed
-   ✓ Build successful
+   ✓ Build successful with rattler-build --variant python_min=3.10
    Package: <package>-<version>-<build>.conda
    ✓ Tests passed"
    ```
@@ -740,10 +742,10 @@ cat conda-forge.yml
 
 bd comment forge-fix-962 "✓ Updated conda-forge.yml with rattler-build and pixi"
 
-# 5. Test with rattler-build locally
-rattler-build build --recipe recipe/recipe.yaml
+# 5. Test with rattler-build locally (use variant for python_min)
+rattler-build build --recipe recipe/recipe.yaml --variant python_min=3.10
 
-bd comment forge-fix-962 "✓ Build successful with rattler-build
+bd comment forge-fix-962 "✓ Build successful with rattler-build --variant python_min=3.10
 ✓ Tests passed (imports + pip check)
 Package: colorama-0.4.6-pyh4616a5c_2.conda"
 
@@ -1075,16 +1077,26 @@ source:
 
 ## Known Issues & Limitations
 
-### conda-smithy re-render and rattler-build
+### ✅ conda-smithy re-render WORKS with rattler-build (Updated 2025-11-29)
 
-Currently, conda-smithy's re-render command doesn't fully support rattler-build CI script generation for all platforms. This means:
+**Previous documentation was incorrect.** conda-smithy's re-render command DOES fully support rattler-build CI script generation!
 
-- Configure `conda_build_tool: rattler-build` in conda-forge.yml
-- BUT: Do NOT run `conda-smithy rerender` yet (it removes the conda-build scripts without proper rattler-build replacements)
-- CI will still show warnings but the feedstock maintainers can manually configure rattler-build after the PR is merged
-- Alternative: Manually update `.azure-pipelines/`, `.circleci/`, `.github/workflows/` to use rattler-build instead of conda-build
+**Correct workflow:**
+1. Configure `conda_build_tool: rattler-build` and `conda_install_tool: pixi` in conda-forge.yml
+2. Remove meta.yaml completely
+3. **Run `conda-smithy rerender --commit auto`** ✅ This works!
+4. Result: CI scripts properly configured for rattler-build, pixi.toml created
 
-This is a temporary limitation while conda-smithy adds full rattler-build support.
+**What conda-smithy rerender does:**
+- Updates `.scripts/build_steps.sh` to use `rattler-build` instead of `conda-build`
+- Creates `pixi.toml` for dependency management
+- Injects `python_min` from conda-forge defaults (currently 3.10)
+- Regenerates all CI configuration files
+
+**Verified working as of:**
+- conda-smithy 3.53.3
+- rattler-build 0.53.0
+- Successfully tested with certifi-feedstock (PR #121)
 
 ## Troubleshooting Common Issues
 
