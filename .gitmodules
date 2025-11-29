@@ -67,3 +67,6 @@
 [submodule "packages/decorator-feedstock"]
 	path = packages/decorator-feedstock
 	url = https://github.com/zachcp/decorator-feedstock.git
+[submodule "packages/semantic_version-feedstock"]
+	path = packages/semantic_version-feedstock
+	url = https://github.com/zachcp/semantic_version-feedstock.git
