@@ -85,3 +85,6 @@
 [submodule "packages/zipp-feedstock"]
 	path = packages/zipp-feedstock
 	url = https://github.com/zachcp/zipp-feedstock.git
+[submodule "packages/wrapt-feedstock"]
+	path = packages/wrapt-feedstock
+	url = https://github.com/zachcp/wrapt-feedstock.git
