@@ -58,3 +58,12 @@
 [submodule "packages/pytz-feedstock"]
 	path = packages/pytz-feedstock
 	url = https://github.com/zachcp/pytz-feedstock.git
+[submodule "packages/cycler-feedstock"]
+	path = packages/cycler-feedstock
+	url = https://github.com/zachcp/cycler-feedstock.git
+[submodule "packages/dill-feedstock"]
+	path = packages/dill-feedstock
+	url = https://github.com/zachcp/dill-feedstock.git
+[submodule "packages/decorator-feedstock"]
+	path = packages/decorator-feedstock
+	url = https://github.com/zachcp/decorator-feedstock.git
