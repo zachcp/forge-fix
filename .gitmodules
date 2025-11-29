@@ -22,3 +22,24 @@
 [submodule "packages/importlib-metadata-feedstock"]
 	path = packages/importlib-metadata-feedstock
 	url = https://github.com/zachcp/importlib-metadata-feedstock.git
+[submodule "packages/pep517-feedstock"]
+	path = packages/pep517-feedstock
+	url = https://github.com/zachcp/pep517-feedstock.git
+[submodule "packages/requests-feedstock"]
+	path = packages/requests-feedstock
+	url = https://github.com/zachcp/requests-feedstock.git
+[submodule "packages/pyyaml-feedstock"]
+	path = packages/pyyaml-feedstock
+	url = https://github.com/zachcp/pyyaml-feedstock.git
+[submodule "packages/urllib3-feedstock"]
+	path = packages/urllib3-feedstock
+	url = https://github.com/zachcp/urllib3-feedstock.git
+[submodule "packages/idna-feedstock"]
+	path = packages/idna-feedstock
+	url = https://github.com/zachcp/idna-feedstock.git
+[submodule "packages/chardet-feedstock"]
+	path = packages/chardet-feedstock
+	url = https://github.com/zachcp/chardet-feedstock.git
+[submodule "packages/pluggy-feedstock"]
+	path = packages/pluggy-feedstock
+	url = https://github.com/zachcp/pluggy-feedstock.git
