@@ -4,3 +4,6 @@
 [submodule "packages/dash-bio-feedstock"]
 	path = packages/dash-bio-feedstock
 	url = https://github.com/zachcp/dash-bio-feedstock.git
+[submodule "packages/addict-feedstock"]
+	path = packages/addict-feedstock
+	url = https://github.com/zachcp/addict-feedstock.git
