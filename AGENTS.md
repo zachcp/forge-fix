@@ -391,21 +391,30 @@ bd comment <id> "✓ Forked and added as submodule"
    - meta.yaml will be removed after testing"
    ```
 
-### Phase 5: Testing
-1. Test build with rattler-build:
+### Phase 5: Testing and Linting
+
+1. **Lint the recipe first**:
    ```bash
    cd packages/<package>-feedstock
+   conda-smithy lint recipe
+   ```
+   
+   Fix any issues before building (see "Common Lint Warnings" section below).
+
+2. **Test build with rattler-build**:
+   ```bash
    rattler-build build --recipe recipe/recipe.yaml
    ```
 
-2. Document results:
+3. **Document results**:
    ```bash
-   bd comment <id> "✓ Build successful
+   bd comment <id> "✓ Linting passed
+   ✓ Build successful
    Package: <package>-<version>-<build>.conda
    ✓ Tests passed"
    ```
 
-3. If blocked:
+4. If blocked:
    - Search for pattern: `bd list --labels pattern,<issue-type>`
    - Create pattern issue if new
    - Link issues: `bd comment <id> "Blocked by forge-fix-xyz"`
@@ -828,9 +837,50 @@ conda-smithy lint recipe
 
 **Note:** `conda-smithy lint` supports both `meta.yaml` and `recipe.yaml` formats.
 
+### Linting Workflow Checklist
+
+Always run the linter before committing:
+
+```bash
+# 1. Lint the recipe
+conda-smithy lint recipe
+
+# 2. Fix any issues (see Common Lint Warnings below)
+
+# 3. Lint again to verify
+conda-smithy lint recipe
+
+# Expected output when passing:
+# "recipe is in fine form"
+```
+
+**When to lint:**
+- After creating `recipe.yaml`
+- Before committing changes
+- Before pushing to your fork
+- Before creating a PR
+
+**Common workflow:**
+```bash
+# Create recipe.yaml
+vim recipe/recipe.yaml
+
+# Lint and fix issues
+conda-smithy lint recipe
+# ... make fixes ...
+conda-smithy lint recipe  # Verify
+
+# Test build
+rattler-build build --recipe recipe/recipe.yaml
+
+# Commit
+git add recipe/recipe.yaml
+git commit -m "Add recipe.yaml with all lint checks passing"
+```
+
 ### Common Lint Warnings
 
-#### Python Version Pinning (noarch: python)
+#### 1. Python Version Pinning (noarch: python)
 
 **Warning:**
 ```
@@ -864,6 +914,55 @@ tests:
 - Ensures package is tested with minimum supported Python version
 - Makes Python version requirements explicit and consistent
 - Allows easy updates when dropping old Python versions
+
+#### 2. Missing Build Backend
+
+**Warning:**
+```
+No valid build backend found for Python recipe for package X using pip. 
+Python recipes using pip need to explicitly specify a build backend in the host section.
+```
+
+**Solution:** Add the appropriate build backend to the `host` section:
+
+```yaml
+requirements:
+  host:
+    - pip
+    - python ${{ python_min }}.*
+    - setuptools  # or hatchling, flit-core, etc.
+```
+
+**Common build backends:**
+- `setuptools` - Most common, uses setup.py or pyproject.toml
+- `hatchling` - Modern build backend, uses pyproject.toml
+- `flit-core` - Lightweight, uses pyproject.toml
+- `poetry-core` - For poetry projects
+
+**How to determine which to use:**
+1. Check the package's `pyproject.toml` for `[build-system]` section
+2. If it has `setup.py`, use `setuptools`
+3. Check PyPI or the source repository
+
+#### 3. PyPI URL (pypi.io vs pypi.org)
+
+**Warning:**
+```
+PyPI default URL is now pypi.org, and not pypi.io. 
+You may want to update the default source url.
+```
+
+**Solution:** Change `pypi.io` to `pypi.org` in the source URL:
+
+```yaml
+# Old (incorrect)
+source:
+  url: https://pypi.io/packages/source/p/package/package-1.0.0.tar.gz
+
+# New (correct)
+source:
+  url: https://pypi.org/packages/source/p/package/package-1.0.0.tar.gz
+```
 
 ### rattler-build Commands
 
