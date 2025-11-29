@@ -77,7 +77,7 @@ forge-fix/
 
 When adding `recipe.yaml` to an existing feedstock:
 
-### Rule: Bump the build number if version is unchanged
+### Rule 1: Bump the build number if version is unchanged
 
 Since we're adding a new file format but not changing the package contents or version, we MUST bump the build number:
 
@@ -91,7 +91,19 @@ build:
   number: 2  # Increment by 1
 ```
 
-### Why?
+### Rule 2: Remove meta.yaml after recipe.yaml is complete
+
+`recipe.yaml` is a **complete replacement** for `meta.yaml`, not a supplement. Once recipe.yaml is working:
+
+```bash
+cd packages/<package>-feedstock
+git rm recipe/meta.yaml
+git commit -m "Remove meta.yaml (replaced by recipe.yaml)"
+```
+
+Both formats should NOT coexist in the same feedstock.
+
+### Why Bump Build Number?
 
 - Adding `recipe.yaml` changes the feedstock but not the upstream source
 - conda-forge requires a build number bump when the version stays the same
@@ -103,6 +115,7 @@ build:
 When creating PR:
 - ✅ Used a personal fork of the feedstock
 - ✅ **Bumped the build number (if the version is unchanged)**
+- ✅ **Removed meta.yaml (recipe.yaml is complete replacement)**
 - ⬜ Reset the build number to `0` (if the version changed)
 - ⬜ Re-rendered with latest conda-smithy
 - ✅ Ensured the license file is being packaged
@@ -308,7 +321,8 @@ bd comment <id> "✓ Forked and added as submodule"
    - New context section
    - \${{ }} template syntax
    - New tests format
-   - Build number bumped to X+1"
+   - Build number bumped to X+1
+   - meta.yaml will be removed after testing"
    ```
 
 ### Phase 5: Testing
@@ -330,17 +344,24 @@ bd comment <id> "✓ Forked and added as submodule"
    - Create pattern issue if new
    - Link issues: `bd comment <id> "Blocked by forge-fix-xyz"`
 
-### Phase 6: Commit & Push
+### Phase 6: Remove meta.yaml & Commit
+
+Once recipe.yaml is tested and working, remove the old format:
+
 ```bash
 cd packages/<package>-feedstock
 
-# Commit the recipe
-git add recipe/recipe.yaml
-git commit -m "Add recipe v1 format (recipe.yaml)
+# Remove meta.yaml (recipe.yaml is complete replacement)
+git rm recipe/meta.yaml
 
-- Convert meta.yaml to recipe.yaml following CEP 13/14
+# Commit both changes
+git add recipe/recipe.yaml
+git commit -m "Replace meta.yaml with recipe.yaml (CEP 13/14)
+
+- Convert to recipe.yaml following CEP 13/14
 - Use new \${{ }} template syntax
 - Bump build number to X (version unchanged, adding new format)
+- Remove meta.yaml (complete replacement)
 - Tested successfully with rattler-build"
 
 # Push to your fork
@@ -350,7 +371,8 @@ git push origin recipe-v1
 Document:
 ```bash
 bd comment <id> "✅ Pushed to fork
-Branch: https://github.com/YOUR_USERNAME/<package>-feedstock/tree/recipe-v1"
+Branch: https://github.com/YOUR_USERNAME/<package>-feedstock/tree/recipe-v1
+Note: meta.yaml removed (recipe.yaml is complete replacement)"
 ```
 
 ### Phase 7: Update Main Repo
@@ -563,13 +585,15 @@ bd comment forge-fix-962 "✓ Build successful with rattler-build
 ✓ Tests passed (imports + pip check)
 Package: colorama-0.4.6-pyh4616a5c_2.conda"
 
-# 5. Commit and push to fork
+# 5. Remove meta.yaml and commit both changes
+git rm recipe/meta.yaml
 git add recipe/recipe.yaml
-git commit -m "Add recipe v1 format (recipe.yaml)
+git commit -m "Replace meta.yaml with recipe.yaml (CEP 13/14)
 
-- Convert meta.yaml to recipe.yaml following CEP 13/14
+- Convert to recipe.yaml following CEP 13/14
 - Use new \${{ }} template syntax
 - Bump build number to 2 (version unchanged, adding new format)
+- Remove meta.yaml (complete replacement)
 - Tested successfully with rattler-build"
 
 git push origin recipe-v1
