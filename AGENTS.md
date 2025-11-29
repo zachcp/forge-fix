@@ -33,6 +33,22 @@ Help conda-forge migrate from the classic recipe format (CEP 13/14 Version 0) to
 - **Old**: `{{ variable }}` (Jinja2)
 - **New**: `${{ variable }}` (Valid YAML)
 
+#### Recipe.yaml Key Ordering (CRITICAL)
+The top-level keys must be in this exact order, or conda-smithy linting will fail:
+```yaml
+schema_version: 1
+context: { }
+package: { }
+source: { }
+build: { }
+requirements: { }
+tests: { }
+about: { }
+extra: { }
+```
+
+**Important**: This is NOT the same order as meta.yaml. Never mix orders.
+
 #### Selectors
 - **Old**: Comments with `# [selector]`
 - **New**: YAML dictionaries with `if/then/else`
@@ -390,6 +406,16 @@ bd comment <id> "✓ Forked and added as submodule"
    - conda-forge.yml configured for rattler-build
    - meta.yaml will be removed after testing"
    ```
+
+### Phase 5: Linting Checklist (Before PR Submission)
+
+**CRITICAL: Do NOT submit a PR without passing all these checks:**
+
+1. **Key ordering** - Must be: schema_version, context, package, source, build, requirements, tests, about, extra
+2. **Field names** - Use `recipe-maintainers` (hyphens), not `recipe_maintainers` (underscores)
+3. **About fields** - Use `homepage`, `documentation`, `repository` (not `home`, `doc_url`, `dev_url`)
+4. **Build backend** - Python pip recipes MUST have setuptools, hatchling, flit-core, or poetry-core in host section
+5. **Python pinning** - For `noarch: python`, use `python_min` context variable with proper syntax
 
 ### Phase 5: Testing and Linting
 
@@ -877,6 +903,27 @@ rattler-build build --recipe recipe/recipe.yaml
 git add recipe/recipe.yaml
 git commit -m "Add recipe.yaml with all lint checks passing"
 ```
+
+### recipe.yaml Field Name Reference
+
+When migrating from meta.yaml to recipe.yaml, these field names change:
+
+**extra section (CRITICAL - uses hyphens, not underscores):**
+- `meta.yaml`: `extra: recipe-maintainers:`
+- `recipe.yaml`: `extra: recipe-maintainers:` ✅ (same!)
+
+**about section:**
+- `meta.yaml`: `home:`, `doc_url:`, `dev_url:`
+- `recipe.yaml`: `homepage:`, `documentation:`, `repository:`
+
+**Python build backends:**
+For pip-based Python recipes, you MUST list a build backend in `host`:
+- `setuptools` - Standard, uses setup.py or pyproject.toml
+- `hatchling` - Modern, uses pyproject.toml
+- `flit-core` - Lightweight, uses pyproject.toml
+- `poetry-core` - For poetry projects
+
+Without this, conda-smithy will warn about missing build backend.
 
 ### Common Lint Warnings
 
