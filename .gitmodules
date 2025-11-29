@@ -13,3 +13,6 @@
 [submodule "packages/acgc-feedstock"]
 	path = packages/acgc-feedstock
 	url = https://github.com/zachcp/acgc-feedstock.git
+[submodule "packages/sortedcontainers-feedstock"]
+	path = packages/sortedcontainers-feedstock
+	url = https://github.com/zachcp/sortedcontainers-feedstock.git
