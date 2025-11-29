@@ -16,3 +16,6 @@
 [submodule "packages/sortedcontainers-feedstock"]
 	path = packages/sortedcontainers-feedstock
 	url = https://github.com/zachcp/sortedcontainers-feedstock.git
+[submodule "packages/click-feedstock"]
+	path = packages/click-feedstock
+	url = https://github.com/zachcp/click-feedstock.git
