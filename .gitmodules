@@ -91,3 +91,9 @@
 [submodule "packages/cffi-feedstock"]
 	path = packages/cffi-feedstock
 	url = https://github.com/zachcp/cffi-feedstock.git
+[submodule "packages/pathspec-feedstock"]
+	path = packages/pathspec-feedstock
+	url = https://github.com/zachcp/pathspec-feedstock.git
+[submodule "packages/wcwidth-feedstock"]
+	path = packages/wcwidth-feedstock
+	url = https://github.com/zachcp/wcwidth-feedstock.git
