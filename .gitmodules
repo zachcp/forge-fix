@@ -88,3 +88,6 @@
 [submodule "packages/wrapt-feedstock"]
 	path = packages/wrapt-feedstock
 	url = https://github.com/zachcp/wrapt-feedstock.git
+[submodule "packages/cffi-feedstock"]
+	path = packages/cffi-feedstock
+	url = https://github.com/zachcp/cffi-feedstock.git

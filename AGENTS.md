@@ -132,6 +132,48 @@ gh pr create --draft \
   --body "Draft PR for recipe.yaml migration. Feedback welcome!"
 ```
 
+## Compiling Native Code
+
+### Patches
+- Patches are **critical** - always verify they apply correctly
+- Check patched files in build directory: `find output/bld -name "file.ext" -exec grep "patch marker" {} \;`
+- Patches syntax: list of paths relative to recipe directory
+  ```yaml
+  source:
+    patches:
+      - patches/0001-fix.patch
+      - patches/0002-other.patch
+      - if: osx
+        then:
+          - patches/0003-apple.patch
+  ```
+
+### C-stdlib Variants
+- Local builds may fail with "undefined" for `${{ stdlib('c') }}`
+- **macOS:** `--variant c_stdlib=macosx_deployment_target --variant c_stdlib_version=11.0`
+- **Linux:** `--variant c_stdlib=sysroot --variant c_stdlib_version=2.17`
+- Or comment out stdlib line for local testing only
+
+### Linux Testing (Docker)
+- Use `mambaorg/micromamba:latest` for clean environment
+- On ARM64 Mac, add `--platform linux/amd64` flag
+  ```bash
+  docker run --rm --platform linux/amd64 \
+    -v "$(pwd)/packages/<pkg>-feedstock:/work" \
+    mambaorg/micromamba:latest bash -c "
+    micromamba install -y -n base -c conda-forge rattler-build && \
+    cd /work && \
+    rattler-build build --recipe recipe/recipe.yaml \
+      --variant python=3.11 \
+      --variant c_stdlib=sysroot \
+      --variant c_stdlib_version=2.17
+  "
+  ```
+
+### Platform-Specific Dependencies
+- Use `if: not win` / `if: win` for platform-specific deps (libffi, patch tools)
+- Cross-compilation needs `python` and `cross-python_${{ target_platform }}` in build section
+
 ## Troubleshooting
 
 | Issue | Fix |
@@ -150,7 +192,8 @@ gh pr create --draft \
 ## Examples
 
 **colorama** (noarch): Pure Python, straightforward conversion  
-**wrapt** (C-ext): ⚠️ Blocked - Recipe works locally but CI infrastructure incomplete
+**wrapt** (C-ext): ⚠️ Blocked - Recipe works locally but CI infrastructure incomplete  
+**cffi** (C-ext): FFI package with patches, compiler deps, platform-specific requirements
 
 ## Next Targets
 
@@ -162,4 +205,4 @@ Simple noarch packages to practice:
 
 ---
 
-**Last Updated:** 2025-01-29
+**Last Updated:** 2025-01-30
