@@ -97,3 +97,15 @@
 [submodule "packages/wcwidth-feedstock"]
 	path = packages/wcwidth-feedstock
 	url = https://github.com/zachcp/wcwidth-feedstock.git
+[submodule "packages/python-dateutil-feedstock"]
+	path = packages/python-dateutil-feedstock
+	url = https://github.com/zachcp/python-dateutil-feedstock.git
+[submodule "packages/flake8-feedstock"]
+	path = packages/flake8-feedstock
+	url = https://github.com/zachcp/flake8-feedstock.git
+[submodule "packages/funcsigs-feedstock"]
+	path = packages/funcsigs-feedstock
+	url = https://github.com/zachcp/funcsigs-feedstock.git
+[submodule "packages/dataclasses-json-feedstock"]
+	path = packages/dataclasses-json-feedstock
+	url = https://github.com/zachcp/dataclasses-json-feedstock.git
