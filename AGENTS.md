@@ -79,7 +79,9 @@ source:
 
 #### 4. **pip install Script**
 - Standard: `python -m pip install . --no-deps -vv`
-- Use `--no-build-isolation` only for packages with non-setuptools build backends (poetry, hatchling)
+  - `--no-deps`: Don't install dependencies (conda handles them via requirements section)
+  - `-vv`: Verbose output for debugging
+- Add `--no-build-isolation` ONLY for non-setuptools backends (poetry-core, hatchling, flit-core)
 - Never include `--ignore-installed` in conda recipes
 
 #### 5. **Entry Points**
