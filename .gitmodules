@@ -109,3 +109,6 @@
 [submodule "packages/dataclasses-json-feedstock"]
 	path = packages/dataclasses-json-feedstock
 	url = https://github.com/zachcp/dataclasses-json-feedstock.git
+[submodule "packages/tabulate-feedstock"]
+	path = packages/tabulate-feedstock
+	url = https://github.com/zachcp/tabulate-feedstock.git

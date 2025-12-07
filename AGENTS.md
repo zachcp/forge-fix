@@ -82,6 +82,16 @@ source:
 - Use `--no-build-isolation` only for packages with non-setuptools build backends (poetry, hatchling)
 - Never include `--ignore-installed` in conda recipes
 
+#### 5. **Entry Points**
+- Entry points are handled automatically via setuptools - NOT specified in recipe.yaml
+- Remove from package section entirely
+- Entry points will be created automatically when package is installed
+
+#### 6. **Common Recipe.yaml Issues**
+- Remove `python_min` from context - it's injected by conda-forge CI
+- Don't duplicate fields in tests (e.g., don't repeat `python_version` twice)
+- Use variable syntax for all template values: `${{ name }}`, `${{ version }}`
+
 ### Syntax Changes (Key Conversions)
 
 | Old (meta.yaml) | New (recipe.yaml) |
