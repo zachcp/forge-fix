@@ -332,7 +332,11 @@ The bot will:
 - Update README and other metadata
 - Commit everything back to your PR branch
 
-**Note:** Wait for the bot before pushing additional commits to avoid conflicts.
+**Important:** 
+- CI may fail on first run if bot hasn't rerendered yet (error: "No valid recipes found")
+- This is expected - wait for bot rerender comment before worrying about CI failures
+- Once rerendered, CI will use rattler-build and pass
+- **Note:** Wait for the bot before pushing additional commits to avoid conflicts
 
 ## Compiling Native Code
 
